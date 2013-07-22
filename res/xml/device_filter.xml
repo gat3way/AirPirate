@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <!-- NetGear WNA100M 2118 -->
+    <usb-device vendor-id="21189" product-id="36929" />
+</resources>
