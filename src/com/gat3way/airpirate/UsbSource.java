@@ -113,12 +113,14 @@ abstract public class UsbSource {
 	protected void updateDeviceStringOnUi(String str)
 	{
 		final String text=str;
-		mainActivity.runOnUiThread(new Runnable() {
+		Runnable run = new Runnable() {
             @Override
             public void run() {
             	mainActivity.updateDeviceString(text);
             }
-		});
+		};
+		mainActivity.runOnUiThread(run);
+		run = null;
 	}
 	
 	protected void updateStatusString(String str)
@@ -129,12 +131,14 @@ abstract public class UsbSource {
 	protected void updateStatusStringOnUi(String str)
 	{
 		final String text=str;
-		mainActivity.runOnUiThread(new Runnable() {
+		Runnable run = new Runnable() {
             @Override
             public void run() {
             	mainActivity.updateStatusString(text);
             }
-		});
+		};
+		mainActivity.runOnUiThread(run);
+		run=null;
 	}
 
 	protected void updateDeviceStatusString(String str)
@@ -146,18 +150,22 @@ abstract public class UsbSource {
 	{
 		mainActivity.addNetwork(network); 
 		band.updateNetworks(network, "");
+		band.nets++;
 	}
 
 	protected void addNetworkOnUi(String network)
 	{
 		final String text=network;
-		mainActivity.runOnUiThread(new Runnable() 
+		Runnable run = new Runnable() 
 		{
             @Override
             public void run() {
             	mainActivity.addNetwork(text);
             }
-		});
+		};
+		band.nets++;
+		mainActivity.runOnUiThread(run);
+		run=null;
 	}
 
 	protected void updateNetwork(String network,String extra)
@@ -169,28 +177,34 @@ abstract public class UsbSource {
 	{
 		final String text=network;
 		final String text2=extra;
-		mainActivity.runOnUiThread(new Runnable() {
+		Runnable run = new Runnable() {
             @Override
             public void run() {
             	mainActivity.updateNetwork(text,text2);
             }
-		});
+		};
+		mainActivity.runOnUiThread(run);
+		run=null;
 	}
 	
 	protected void removeNetwork(String network)
 	{
-		mainActivity.removeNetwork(network); 
+		mainActivity.removeNetwork(network);
+		band.nets--;
 	}
 
 	protected void removeNetworkOnUi(String network)
 	{
 		final String text=network;
-		mainActivity.runOnUiThread(new Runnable() {
+		Runnable run = new Runnable() {
             @Override
             public void run() {
             	mainActivity.removeNetwork(text);
             }
-		});
+		};
+		mainActivity.runOnUiThread(run);
+		run=null;
+		band.nets--;
 	}
 
 
@@ -198,18 +212,22 @@ abstract public class UsbSource {
 	{
 		mainActivity.addNetwork(station); 
 		band.updateNetworks(station, "");
+		band.stations++;
 	}
 
 	protected void addStationOnUi(String station)
 	{
 		final String text=station;
-		mainActivity.runOnUiThread(new Runnable() 
+		Runnable run = new Runnable() 
 		{
             @Override
             public void run() {
             	mainActivity.addStation(text);
             }
-		});
+		};
+		band.stations++;
+		mainActivity.runOnUiThread(run);
+		run=null;
 	}
 
 	protected void updateStation(String station,String extra)
@@ -221,31 +239,37 @@ abstract public class UsbSource {
 	{
 		final String text=station;
 		final String text2=extra;
-		mainActivity.runOnUiThread(new Runnable() 
+		Runnable run = new Runnable() 
 		{
             @Override
             public void run() {
             	mainActivity.updateStation(text,text2);
             }
-		});
+		};
+		mainActivity.runOnUiThread(run);
+		run=null;
 	}
 	
 	protected void removeStation(String station)
 	{
-		mainActivity.removeStation(station); 
+		mainActivity.removeStation(station);
+		band.stations--;
 	}
 
 	protected void removeStationOnUi(String station)
 	{
 		final String text=station;
-		mainActivity.runOnUiThread(new Runnable() 
+		Runnable run = new Runnable() 
 		{
             @Override
             public void run() 
             {
             	mainActivity.removeStation(text);
             }
-		});
+		};
+		band.stations--;
+		mainActivity.runOnUiThread(run);
+		run=null;
 	}
 	
 	
@@ -253,12 +277,14 @@ abstract public class UsbSource {
 	protected void updateDeviceStatusStringOnUi(String str)
 	{
 		final String text=str;
-		mainActivity.runOnUiThread(new Runnable() {
+		Runnable run = new Runnable() {
             @Override
             public void run() {
             	mainActivity.updateDeviceStatusString(text);
             }
-		});
+		};
+		mainActivity.runOnUiThread(run);
+		run=null;
 	}
 	
 	public void parseFrame(byte[] buffer, int offset, int l)
@@ -277,11 +303,12 @@ abstract public class UsbSource {
 				{
 					int type=buffer[noffset];
 					int len=buffer[noffset+1];
+					if (len<0) break;
 					switch (type)
 					{
 						// SSID? 
 						case 0:
-							if ((len+noffset+2)<l)
+							if ((len+noffset+2+1)<l)
 							ssid = new String(buffer,noffset+2,len);
 							break;
 						case 3:
@@ -297,9 +324,11 @@ abstract public class UsbSource {
     			Network network = band.getNetwork(getMacString(buffer,bssid_offset));
     			network.beacon++;
     			network.rx+=(l-offset);
+    			band.rx+=(l-offset);
     			network.channel = channel;
     			network.encType = enctype;
     			network.updateTimestamp();
+    			ssid=null;
     		}
 			
 		}
@@ -315,19 +344,23 @@ abstract public class UsbSource {
 				int enctype=0; // 0-open 1-wep 2-wpa 3-wpa2
 				while ((noffset+6)<l)
 				{
+					if (noffset<0) break;
 					int type=buffer[noffset];
-					int len=buffer[noffset+1];
+					int len=(int)buffer[noffset+1];
+					if (len<0) break;
 					switch (type)
 					{
 						// SSID? 
 						case 0:
-							if ((len+noffset+2)<l)
+							if ((len+noffset+2+1)<l)
 							ssid = new String(buffer,noffset+2,len);
 							break;
 						case 3:
+							if ((noffset+2+1+1)<l)
 							channel = buffer[noffset+2];
 							break;
 						case (byte)0xdd:
+							if ((noffset+7)<l)
 							enctype = (buffer[noffset+7]==1) ? 2 : 3;
 							break;
 					}
@@ -337,9 +370,11 @@ abstract public class UsbSource {
     			Network network = band.getNetwork(getMacString(buffer,bssid_offset));
     			network.beacon++;
     			network.rx+=(l-offset);
+    			band.rx+=(l-offset);
     			network.channel = channel;
     			network.encType = enctype;
     			network.updateTimestamp();
+    			ssid = null;
     		}
 		}
 		// Data
@@ -361,23 +396,26 @@ abstract public class UsbSource {
     				bssid_offset=offset+4;
     			}
     			
-    			// Examine if handshake
+    			// Examine if handshake - stupid way
     			if ((offset+24+8+8)<l)
     			if (((byte)buffer[offset+24+6]==(byte)0x88)&&(((byte)buffer[offset+24+7]==(byte)0x8e)))
     			if ((byte)buffer[offset+24+8+1]==(byte)3)
     			{
     				handshake=true;
     			}
+    			// Examine if handshake - serious way
+    			
     			
 				// Add new station?
     			Network network = band.getNetwork(getMacString(buffer, bssid_offset));
     			network.updateTimestamp();
     			network.data++;
     			network.rx+=(l-offset);
+    			band.rx+=(l-offset);
     			if (bssid_offset>0)
     			{
 	    			String stastr = getMacString(buffer, sta_offset);
-	    			if ((!stastr.equals("ff:ff:ff:ff:ff:ff"))&&(!stastr.substring(0,8).equals("01:00:5e"))&&(!stastr.substring(0,5).equals("33:33")))
+	    			if ((!stastr.equals("ff:ff:ff:ff:ff:ff"))&&(!stastr.substring(0,8).equals("01:00:5e"))&&(!stastr.substring(0,8).equals("00:00:00"))&&(!stastr.substring(0,8).equals("01:80:c2"))&&(!stastr.substring(0,5).equals("33:33"))&&(!stastr.substring(0,8).equals("01:00:0c")))
 	    			{
 	    				network.updateStations(getMacString(buffer, sta_offset));
 	    				network.updateStationData(getMacString(buffer, sta_offset));

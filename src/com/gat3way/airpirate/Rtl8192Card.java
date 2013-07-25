@@ -1597,7 +1597,7 @@ public class Rtl8192Card extends UsbSource
 		set_bbreg(0xe14,0xFFFFFFFF,pwrval);
 		set_bbreg(0xe18,0xFFFFFFFF,pwrval);
 		set_bbreg(0xe1c,0xFFFFFFFF,pwrval);
-		 */
+		*/
 		
 		set_bbreg(0xe08,0xff00,0x25);
 		set_bbreg(0x86c,0xffffff00,0x25252500);
@@ -1615,6 +1615,7 @@ public class Rtl8192Card extends UsbSource
 		set_bbreg(0x84c,0xffffffff,0);
 		set_bbreg(0xe1c,0xFFFFFFFF,0x292b2c2c);
 		set_bbreg(0x868,0xffffffff,0);
+		
 		// WRITEREG RF_CHNLBW / channel 
 		set_bbreg(0x840,0xFFFFFFFF,RTL8188CUS_CHNLBW+channel);
 	}
@@ -2337,7 +2338,7 @@ public class Rtl8192Card extends UsbSource
 		Log.d(TAG, "got frame: " + s);
 	}
 	
-	
+
 	
     private class usbThread extends Thread 
     {
@@ -2364,10 +2365,15 @@ public class Rtl8192Card extends UsbSource
     		int sz = 2500;
 			byte[] buffer = new byte[sz];
 			Band band = Band.instance();
+
 			
-			while (!stopped) {
-				int l = mConnection.bulkTransfer(mBulkEndpoint, buffer, sz, 2500);
-				
+			while (!stopped) 
+			{
+				int l=0;
+				//synchronized(this)
+				{
+					l = mConnection.bulkTransfer(mBulkEndpoint, buffer, sz, 2000);
+				}
 				if (l > 0) 
 				{
 					// Offset rcvbuf by (deviceinfo+rtlinfo) bytes
@@ -2377,11 +2383,12 @@ public class Rtl8192Card extends UsbSource
 				} 
 				else if (l < 0) 
 				{
-					updateDeviceStatusStringOnUi("Failed to do bulk transfer "+l);
-					updateStatusStringOnUi("Error");
+					//updateDeviceStatusStringOnUi("Failed to do bulk transfer "+l);
+					//updateStatusStringOnUi("Error");
 					Log.e(TAG, "Failed to do bulkio");
-					return;
+					//return;
 				}
+
 			}
     	}
     };
@@ -2478,6 +2485,25 @@ public class Rtl8192Card extends UsbSource
 		    	  }
 
 		    	  mUsbThread.start();
+		    	  Thread hopthread = new Thread()
+		    	  {
+		    		  public void run()
+		    		  {
+	    				int hop=0;
+	    				int chans[]={1,7,11};
+						while (true)
+	    				{
+							//synchronized(this)
+							{
+								setChannel(chans[hop]);
+							}
+							hop++;
+							if (hop==3) hop=0;
+							SystemClock.sleep(100);
+						}
+		    		  }
+		    	  };
+		    	  hopthread.start();
 		      }
 		};
 		thread.start();
@@ -2597,8 +2623,6 @@ public class Rtl8192Card extends UsbSource
 		packet[28]=(byte)(val7&0xff);
 		packet[29]=(byte)((val7>>8)&0xff);
 		
-		int initial=(int)(Math.random()*4096);
-		
 		for (int k=0;k<3;k++)
 		{
 			// now the first deauth frame
@@ -2627,8 +2651,8 @@ public class Rtl8192Card extends UsbSource
 			packet[52]=(byte)s_bssid[4];
 			packet[53]=(byte)s_bssid[5];
 	
-			packet[54]=(byte)(((initial+k*4)&0xff)<<4);
-			packet[55]=(byte)((initial+k*4+1)&0xff);
+			packet[54]=(byte)(((k*4))<<4);
+			packet[55]=(byte)((k*4+1));
 			packet[56]=0x03;
 			packet[57]=0x00;
 			
@@ -2675,8 +2699,8 @@ public class Rtl8192Card extends UsbSource
 			packet[52]=(byte)s_bssid[4];
 			packet[53]=(byte)s_bssid[5];
 	
-			packet[54]=(byte)(((initial+k*4+2)&0xff)<<4);
-			packet[55]=(byte)((initial+k*4+3)&0xff);
+			packet[54]=(byte)(((k*4+2))<<4);
+			packet[55]=(byte)((k*4+3));
 			packet[56]=0x03;
 			packet[57]=0x00;
 			

@@ -66,6 +66,7 @@ public class Network
 		    		Station station = new Station();
 		    		station.hwaddr = mac;
 		    		stations.add(station);
+		    		//band.stations++;
 		    		band.getUsbSource().addStationOnUi(mac);
 				}
 			}	
@@ -94,6 +95,7 @@ public class Network
 				if (station.hwaddr.equals(hwaddr))
 				{
 					stations.remove(station);
+					Band band = Band.instance();
 					break;
 				}
 			}
@@ -122,6 +124,8 @@ public class Network
 				station.hwaddr = hwaddr;
 				station.rx = rx;
 				stations.add(station);
+				Band band = Band.instance();
+				band.stations++;
 			}
 		}
 	}
@@ -147,6 +151,8 @@ public class Network
 				station.hwaddr = hwaddr;
 				station.data = 1;
 				stations.add(station);
+				Band band = Band.instance();
+				band.stations++;
 			}
 		}
 	}
@@ -172,6 +178,9 @@ public class Network
 				station.hwaddr = hwaddr;
 				station.handshake = 1;
 				stations.add(station);
+				Band band = Band.instance();
+				band.stations++;
+				
 			}
 		}
 	}
@@ -198,6 +207,8 @@ public class Network
 				station.hwaddr = hwaddr;
 				station.lastPacket = System.currentTimeMillis()/1000;;
 				stations.add(station);
+				Band band = Band.instance();
+				band.stations++;
 			}
 		}
 	}

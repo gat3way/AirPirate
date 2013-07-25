@@ -230,10 +230,10 @@ public class MainActivity extends SherlockFragmentActivity
 		    	  while (true)
 		    	  {
 		    		  SystemClock.sleep(1000);
-		    		  int stations = band.getStations();
-		    		  int networks = band.getNetworks();
-		    		  int handshakes = band.getHandshakes();
-		    		  long rx = band.getTraffic();
+		    		  int stations = band.stations;
+		    		  int networks = band.nets;
+		    		  int handshakes = band.handshakes;
+		    		  long rx = band.rx;
 		    		  String formatted="";
 			    	  if (rx>1024*1024*1024)
 			    	  {
@@ -248,16 +248,20 @@ public class MainActivity extends SherlockFragmentActivity
 			    		  formatted = String.format("%.02f", (double)((double)rx/(1024)))+" KB";
 			    	  }
 			    	  final String text="| RX: "+formatted+" | Networks: "+networks+" | Stations: "+stations+" | Handshakes: "+handshakes;
+			    	  formatted=null;
 			  		  if (band.getUsbSource()!=null)
 			  		  {
-				    	  runOnUiThread(new Runnable() 
+				    	  Runnable run = 
+			  			  new Runnable() 
 				  		  {
 				              @Override
 				              public void run() 
 				              {
 				            	  updateStatusString(text);
 				              }
-				  		  });
+				  		  };
+				  		runOnUiThread(run);
+				  		run=null;
 			  		  }
 		    	  }
 		      }

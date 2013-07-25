@@ -32,6 +32,7 @@ public class MainFragmentNets extends SherlockFragment
     	toadd[0]=ssid;toadd[1]=extra;
     	adapter.add(toadd);
     	adapter.notifyDataSetChanged();
+    	toadd=null;
     }
 
     public void removeNetwork(String ssid)

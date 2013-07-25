@@ -9,6 +9,10 @@ public class Band
 	private static Band instance;
 	private Object band_lock = new Object();
 	private UsbSource usbSource = null;
+	public int rx=0;
+	public int stations=0;
+	public int handshakes=0;
+	public int nets=0;
 	
 	public static Band instance()
 	{
@@ -98,10 +102,6 @@ public class Band
 		}
 	}
 
-	
-
-	
-	
 	
 	
 	public void updateNetworksTimeStamp()

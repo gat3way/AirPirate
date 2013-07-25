@@ -39,6 +39,7 @@ public class MainFragmentStations extends SherlockFragment implements OnItemClic
     	toadd[0]=ssid;toadd[1]=extra;
     	adapter.add(toadd);
     	adapter.notifyDataSetChanged();
+    	toadd=null;
     }
 
     public void removeStation(String ssid)
