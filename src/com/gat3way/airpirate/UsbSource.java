@@ -289,6 +289,13 @@ abstract public class UsbSource {
 	
 	public void parseFrame(byte[] buffer, int offset, int l)
 	{
+		// Are we capturing traffic?
+		band = Band.instance();
+		if (band.capture==true)
+		{
+			band.saveFrame(buffer,offset,l);
+		}
+		
 		// Beacon
 		if (l>(24+12+10+offset))
 		{

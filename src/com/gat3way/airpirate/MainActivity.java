@@ -20,6 +20,10 @@ import android.util.Log;
 import android.app.Activity;
 import android.view.Menu;
 import android.widget.TextView;
+import android.widget.Button;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import android.view.View;
 
 public class MainActivity extends SherlockFragmentActivity 
 {
@@ -145,7 +149,29 @@ public class MainActivity extends SherlockFragmentActivity
  		if (stations!=null)	stations.removeStation(station);
  	}
  	
- 	
+ 	public void onCapturePressed(View v)
+ 	{
+ 		Band band = Band.instance();
+ 		Button button = (Button)findViewById(R.id.captureButton);
+ 		TextView text = (TextView)findViewById(R.id.captureStatus);
+ 		if (band.capture==false)
+ 		{
+ 			button.setText("Stop Capture");
+ 			SimpleDateFormat s = new SimpleDateFormat("dd-MM-yyyy-hh:mm:ss");
+ 			String format = s.format(new Date());
+ 			String filename = "/sdcard/"+format+".pcap";
+ 			text.setText("Capturing: "+filename);
+ 			band.capture=true;
+ 			band.startCapture(filename);
+ 		}
+ 		else
+ 		{
+ 			button.setText("Start Capture");
+ 			text.setText("");
+ 			band.capture=true;
+ 			band.stopCapture();
+ 		}
+ 	}
  	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
