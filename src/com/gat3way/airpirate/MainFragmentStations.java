@@ -150,7 +150,21 @@ public class MainFragmentStations extends SherlockFragment implements OnItemClic
 		    		  // STA update
 		    		  band.updateStationsTimeStamp();
 		    		  band.updateStationsDetails();
-		    		  //band.deAuth("00:23:69:c0:b4:4b","11:22:33:44:55:aa");
+		    		  if (band.getUsbSource()==null)
+		    		  {
+		    			  Runnable run = new Runnable() 
+				  		  {
+				              @Override
+				              public void run() 
+				              {
+				    			  for (int i = 0; i < adapter.getCount(); i++) 
+								  {
+									  adapter.remove(adapter.getItem(i));
+								  }
+				              }
+				  		  };
+				  		  getActivity().runOnUiThread(run);
+		    		  }
 		    	  }
 		      }
 		};

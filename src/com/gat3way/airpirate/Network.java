@@ -61,7 +61,7 @@ public class Network
 						flag = true;
 					}
 				}
-				if (!flag)
+				if (flag==false)
 				{
 		    		Station station = new Station();
 		    		station.hwaddr = mac;
@@ -87,7 +87,6 @@ public class Network
 	
 	public void removeStation(String hwaddr)
 	{
-		
 		synchronized (station_lock)
 		{
 			for (Station station : stations)
@@ -118,7 +117,7 @@ public class Network
 					break;
 				}
 			}
-			if (!found)
+			if (found==false)
 			{
 				Station station = new Station();
 				station.hwaddr = hwaddr;
@@ -145,7 +144,7 @@ public class Network
 					break;
 				}
 			}
-			if (!found)
+			if (found==false)
 			{
 				Station station = new Station();
 				station.hwaddr = hwaddr;
@@ -180,7 +179,6 @@ public class Network
 				stations.add(station);
 				Band band = Band.instance();
 				band.stations++;
-				
 			}
 		}
 	}
@@ -225,12 +223,12 @@ public class Network
 				Station station = stations.get(a);
 				if (((System.currentTimeMillis()/1000) - station.lastPacket)>30)
 				{
+					stations.remove(station);
 					if (band.getUsbSource()!=null)
 					{
 						// TODO
 						band.getUsbSource().removeStationOnUi(station.hwaddr);
 					}
-					stations.remove(station);
 				}
 			}
 		}

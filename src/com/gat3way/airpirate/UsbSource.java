@@ -32,14 +32,14 @@ abstract public class UsbSource {
 	protected UsbEndpoint mBulkEndpoint;
 	protected UsbEndpoint mInjBulkEndpoint;
 	protected PendingIntent mPermissionIntent;
+	protected volatile boolean stopped = false;
+	
 	
 	// counters
 	protected int mLastChannel;
 	protected int bytes=0;
 	protected int nets=0;
 	protected int stations=0;
-	protected ArrayList<String> ssids = new ArrayList<String>();
-	protected ArrayList<String> stas = new ArrayList<String>();
 	
 	
 	// Weak constructor
@@ -102,7 +102,7 @@ abstract public class UsbSource {
 	
 	public void doShutdown()
 	{
-		// DUMMY
+		stopped = true;
 	}
 	
 	protected void updateDeviceString(String str)
@@ -150,7 +150,6 @@ abstract public class UsbSource {
 	{
 		mainActivity.addNetwork(network); 
 		band.updateNetworks(network, "");
-		band.nets++;
 	}
 
 	protected void addNetworkOnUi(String network)
@@ -190,7 +189,6 @@ abstract public class UsbSource {
 	protected void removeNetwork(String network)
 	{
 		mainActivity.removeNetwork(network);
-		band.nets--;
 	}
 
 	protected void removeNetworkOnUi(String network)
@@ -204,7 +202,6 @@ abstract public class UsbSource {
 		};
 		mainActivity.runOnUiThread(run);
 		run=null;
-		band.nets--;
 	}
 
 
@@ -327,8 +324,10 @@ abstract public class UsbSource {
 					}
 					noffset+=(len+2);
 				}
-				band.updateNetworks(ssid, getMacString(buffer,bssid_offset));
-    			Network network = band.getNetwork(getMacString(buffer,bssid_offset));
+				String bssidstr = getMacString(buffer,bssid_offset);
+				band.updateNetworks(ssid, bssidstr);
+    			Network network = band.getNetwork(bssidstr);
+    			if (network.ssid.equals("")) network.ssid=ssid;
     			network.beacon++;
     			network.rx+=(l-offset);
     			band.rx+=(l-offset);
@@ -337,7 +336,6 @@ abstract public class UsbSource {
     			network.updateTimestamp();
     			ssid=null;
     		}
-			
 		}
 		// Probe Response
 		if (l>(24+12+10+offset))
@@ -373,8 +371,10 @@ abstract public class UsbSource {
 					}
 					noffset+=(len+2);
 				}
-				band.updateNetworks(ssid, getMacString(buffer,bssid_offset));
-    			Network network = band.getNetwork(getMacString(buffer,bssid_offset));
+				String bssidstr = getMacString(buffer,bssid_offset);
+				band.updateNetworks(ssid, bssidstr);
+    			Network network = band.getNetwork(bssidstr);
+    			if (network.ssid.equals("")) network.ssid=ssid;
     			network.beacon++;
     			network.rx+=(l-offset);
     			band.rx+=(l-offset);
@@ -384,6 +384,7 @@ abstract public class UsbSource {
     			ssid = null;
     		}
 		}
+		
 		// Data
 		if (l>(24+offset))
 		{
@@ -410,10 +411,48 @@ abstract public class UsbSource {
     			{
     				handshake=true;
     			}
-    			// Examine if handshake - serious way
-    			
-    			
-				// Add new station?
+    			// Examine if handshake - serious way TODO
+    			String bssidstr = getMacString(buffer, bssid_offset);
+    			Network network = band.getNetwork(bssidstr);
+    			network.updateTimestamp();
+    			network.data++;
+    			network.rx+=(l-offset);
+    			band.rx+=(l-offset);
+    			String stastr = getMacString(buffer, sta_offset);
+    			if (bssid_offset>0)
+    			{
+	    			if ((!stastr.equals("ff:ff:ff:ff:ff:ff"))&&(!stastr.substring(0,8).equals("01:00:5e"))&&(!stastr.substring(0,8).equals("00:00:00"))&&(!stastr.substring(0,8).equals("01:80:c2"))&&(!stastr.substring(0,5).equals("33:33"))&&(!stastr.substring(0,8).equals("01:00:0c")))
+	    			{
+	    				network.updateStations(stastr);
+	    				network.updateStationData(stastr);
+	    				network.updateStationTimestamp(stastr);
+	    				network.updateStationRx(stastr, l-offset);
+	    			}
+    			}
+    			if (handshake)
+    			{
+    				network.handshake++;
+    				network.updateStationHandshake(stastr);
+    			}
+    		}
+    		
+    		// Get null Function too
+    		else if (buffer[offset]==(byte)0x48)
+    		{
+    			// Examine DS flag
+    			int sta_offset=0,bssid_offset=0;
+    			boolean handshake=false;
+    			if ((buffer[offset+1]&2)==2)
+    			{
+    				sta_offset = offset+4;
+    				bssid_offset=offset+10;
+    			}
+    			else 
+    			{
+    				sta_offset = offset+16;
+    				bssid_offset=offset+4;
+    			}
+
     			Network network = band.getNetwork(getMacString(buffer, bssid_offset));
     			network.updateTimestamp();
     			network.data++;
@@ -424,16 +463,11 @@ abstract public class UsbSource {
 	    			String stastr = getMacString(buffer, sta_offset);
 	    			if ((!stastr.equals("ff:ff:ff:ff:ff:ff"))&&(!stastr.substring(0,8).equals("01:00:5e"))&&(!stastr.substring(0,8).equals("00:00:00"))&&(!stastr.substring(0,8).equals("01:80:c2"))&&(!stastr.substring(0,5).equals("33:33"))&&(!stastr.substring(0,8).equals("01:00:0c")))
 	    			{
-	    				network.updateStations(getMacString(buffer, sta_offset));
-	    				network.updateStationData(getMacString(buffer, sta_offset));
-	    				network.updateStationTimestamp(getMacString(buffer, sta_offset));
-	    				network.updateStationRx(getMacString(buffer, sta_offset), l-offset);
+	    				network.updateStations(stastr);
+	    				network.updateStationData(stastr);
+	    				network.updateStationTimestamp(stastr);
+	    				network.updateStationRx(stastr, l-offset);
 	    			}
-    			}
-    			if (handshake)
-    			{
-    				network.handshake++;
-    				network.updateStationHandshake(getMacString(buffer, sta_offset));
     			}
     		}
 		}		

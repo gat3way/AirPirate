@@ -42,6 +42,7 @@ public class MainFragmentNets extends SherlockFragment
     		if (adapter.getItem(a)[0].equals(ssid))
     		{
     			adapter.remove(adapter.getItem(a));
+    			band.nets--;
     		}
     	}
     	adapter.notifyDataSetChanged();
@@ -63,10 +64,6 @@ public class MainFragmentNets extends SherlockFragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
     {
-    	//ArrayList<String> lst = new ArrayList<String>();
-		//adapter = new ArrayAdapter<String>(getActivity().getBaseContext(), android.R.layout.simple_list_item_2, lst);
-    	
-		//return super.onCreateView(inflater, container, savedInstanceState);
     	return inflater.inflate(R.layout.fragment_mainnets, null);
     }
     
@@ -109,6 +106,21 @@ public class MainFragmentNets extends SherlockFragment
 		    		  SystemClock.sleep(1000);
 		    		  band.updateNetworksTimeStamp();
 		    		  band.updateNetworksDetails();
+		    		  if (band.getUsbSource()==null)
+		    		  {
+		    			  Runnable run = new Runnable() 
+				  		  {
+				              @Override
+				              public void run() 
+				              {
+				    			  for (int i = 0; i < adapter.getCount(); i++) 
+								  {
+									  adapter.remove(adapter.getItem(i));
+								  }
+				              }
+				  		  };
+				  		  getActivity().runOnUiThread(run);
+		    		  }
 		    	  }
 		      }
 		};

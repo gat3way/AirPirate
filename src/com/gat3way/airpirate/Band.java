@@ -30,9 +30,16 @@ public class Band
 	
 	public void reset()
 	{
+		networks = null;
 		networks = new ArrayList<Network>();
 		usbSource.doShutdown();
 		usbSource = null;
+		rx = 0;
+		stations = 0;
+		handshakes = 0;
+		nets = 0;
+		
+		band_lock = new Object();
 	}
 	
 	
@@ -71,7 +78,7 @@ public class Band
 			}
 			if (!found)
 			{
-				Network network = new Network("",bssid);
+				Network network = new Network(bssid,"");
 				networks.add(network);
 				return network;
 			}
@@ -118,11 +125,11 @@ public class Band
 				Network network = networks.get(a);
 				if (((System.currentTimeMillis()/1000) - network.lastBeacon)>60)
 				{
+					networks.remove(network);
 					if (usbSource!=null)
 					{
 						usbSource.removeNetworkOnUi(network.ssid);
 					}
-					networks.remove(network);
 				}
 			}
 		}
@@ -198,8 +205,6 @@ public class Band
 		    		{
 		    			formatted = String.format("%.02f", (double)((double)station.rx/(1024)))+" KB";
 		    		}
-		    		
-
 		    		
 					String extra = "| SSID: "+network.ssid+" | BSSID: "+network.bssid+" | RX: "+formatted+" |";
 					if (usbSource!=null)

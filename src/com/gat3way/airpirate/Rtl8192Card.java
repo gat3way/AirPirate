@@ -71,7 +71,7 @@ public class Rtl8192Card extends UsbSource
 	private byte efuse_chnlarea_txpwr_ht401s[][] = new byte[2][3];
 	private boolean started = false;
 
-	
+	private usbThread mUsbThread;
 	
 	private int rtl8192cuphy_reg_1tarray[] =  {
 	        0x024, 0x0011800d, 
@@ -2342,7 +2342,7 @@ public class Rtl8192Card extends UsbSource
 	
     private class usbThread extends Thread 
     {
-    	private volatile boolean stopped = false;
+
     	private volatile UsbSource usbsource;
 
     	
@@ -2392,7 +2392,7 @@ public class Rtl8192Card extends UsbSource
 			}
     	}
     };
-    usbThread mUsbThread = new usbThread(this);
+    
 
     
     
@@ -2466,9 +2466,8 @@ public class Rtl8192Card extends UsbSource
 		}
 		
 		mInjBulkEndpoint = ep1;
+		mUsbThread = new usbThread(this);
 
-		
-		
 		Thread thread = new Thread()
 		{
 		      @Override
@@ -2483,7 +2482,7 @@ public class Rtl8192Card extends UsbSource
 		    	  {
 		    		  Log.d(TAG, "Successfully calibrated & started hw");
 		    	  }
-
+		    	  
 		    	  mUsbThread.start();
 		    	  Thread hopthread = new Thread()
 		    	  {
@@ -2491,7 +2490,7 @@ public class Rtl8192Card extends UsbSource
 		    		  {
 	    				int hop=0;
 	    				int chans[]={1,7,11};
-						while (true)
+						while (!stopped)
 	    				{
 							//synchronized(this)
 							{

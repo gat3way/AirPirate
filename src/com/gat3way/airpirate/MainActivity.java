@@ -48,7 +48,7 @@ public class MainActivity extends SherlockFragmentActivity
 			{
          		updateDeviceString("Attached USB device"); 
          		UsbDevice device = (UsbDevice)intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-         		
+         		mUsbSource = new Rtl8192Card(mUsbManager,MainActivity.this);
          		if (mUsbSource.scanUsbDevice(device))
          		{
          			mUsbManager.requestPermission(device, mPermissionIntent);
@@ -77,6 +77,8 @@ public class MainActivity extends SherlockFragmentActivity
  		            		if (err>0)
  		         			{
  		            			// TODO
+ 		            			Band band = Band.instance();
+ 		            			mUsbSource.stopped = false;
  		         			}
  		         			else 
  		         			{
@@ -188,7 +190,7 @@ public class MainActivity extends SherlockFragmentActivity
 		registerReceiver(mUsbReceiver, filter);
 		mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 		
-		mUsbSource = new Rtl8192Card(mUsbManager,this);
+		
 		
 		
 		mActionBar = getSupportActionBar();
@@ -289,11 +291,24 @@ public class MainActivity extends SherlockFragmentActivity
 				  		runOnUiThread(run);
 				  		run=null;
 			  		  }
+			  		  else
+			  		  {
+			  			final String emptyText = "| RX: 0 | Networks: 0 | Stations: 0 | Handshakes: 0";
+			  			Runnable run = new Runnable() 
+				  		    {
+				              @Override
+				              public void run() 
+				              {
+				            	  updateStatusString(emptyText);
+				              }
+				  		    };
+				  		runOnUiThread(run);
+					  	run=null;
+			  		  }
 		    	  }
 		      }
 		};
 		thread.start();
-        
 	}
 
 
