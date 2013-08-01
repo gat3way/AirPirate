@@ -10,6 +10,8 @@ import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.Tab;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.gat3way.airpirate.MainFragmentPagerAdapter;
+
+
 import android.hardware.usb.*;
 import android.content.Context;
 import android.content.Intent;
@@ -98,6 +100,7 @@ public class MainActivity extends SherlockFragmentActivity
     
     
  	
+ 	
  	public void updateDeviceString(String msg) 
  	{
  		TextView text = (TextView)findViewById(R.id.deviceText);
@@ -174,6 +177,14 @@ public class MainActivity extends SherlockFragmentActivity
  			band.stopCapture();
  		}
  	}
+
+ 	
+ 	public void onSettingsPressed(View v)
+ 	{
+ 		Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
+ 	}
+
  	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 

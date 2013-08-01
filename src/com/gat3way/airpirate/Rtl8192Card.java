@@ -2484,25 +2484,8 @@ public class Rtl8192Card extends UsbSource
 		    	  }
 		    	  
 		    	  mUsbThread.start();
-		    	  Thread hopthread = new Thread()
-		    	  {
-		    		  public void run()
-		    		  {
-	    				int hop=0;
-	    				int chans[]={1,7,11};
-						while (!stopped)
-	    				{
-							//synchronized(this)
-							{
-								setChannel(chans[hop]);
-							}
-							hop++;
-							if (hop==3) hop=0;
-							SystemClock.sleep(100);
-						}
-		    		  }
-		    	  };
-		    	  hopthread.start();
+		    	  Band band = Band.instance();
+		    	  band.sourceActive = true;
 		      }
 		};
 		thread.start();

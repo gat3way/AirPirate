@@ -18,6 +18,7 @@ public class Network
 	public int handshake;
 	public int arp;
 	public int channel;
+	public byte[] beaconFrame = null;
 	private Object station_lock = new Object();
 	
 	
@@ -29,6 +30,7 @@ public class Network
 		encType=0;
 		bssid = new_bssid;
 		ssid = new_ssid;
+		beaconFrame = null;
 	}
 	
 	
@@ -68,6 +70,10 @@ public class Network
 		    		stations.add(station);
 		    		//band.stations++;
 		    		band.getUsbSource().addStationOnUi(mac);
+		    		if (band.warMode)
+		    		{
+		    			band.getUsbSource().sendDeauth(mac, bssid);
+		    		}
 				}
 			}	
 		}
@@ -124,6 +130,10 @@ public class Network
 				station.rx = rx;
 				stations.add(station);
 				Band band = Band.instance();
+	    		if (band.warMode)
+	    		{
+	    			band.getUsbSource().sendDeauth(hwaddr, bssid);
+	    		}
 				band.stations++;
 			}
 		}
@@ -152,6 +162,10 @@ public class Network
 				stations.add(station);
 				Band band = Band.instance();
 				band.stations++;
+	    		if (band.warMode)
+	    		{
+	    			band.getUsbSource().sendDeauth(hwaddr, bssid);
+	    		}
 			}
 		}
 	}
@@ -178,6 +192,10 @@ public class Network
 				station.handshake = 1;
 				stations.add(station);
 				Band band = Band.instance();
+	    		if (band.warMode)
+	    		{
+	    			band.getUsbSource().sendDeauth(hwaddr, bssid);
+	    		}
 				band.stations++;
 			}
 		}
@@ -206,6 +224,10 @@ public class Network
 				station.lastPacket = System.currentTimeMillis()/1000;;
 				stations.add(station);
 				Band band = Band.instance();
+	    		if (band.warMode)
+	    		{
+	    			band.getUsbSource().sendDeauth(hwaddr, bssid);
+	    		}
 				band.stations++;
 			}
 		}

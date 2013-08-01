@@ -8,6 +8,7 @@ import android.util.Log;
 public class Band 
 {
 	private ArrayList<Network> networks;
+	public ArrayList<WPAHandshake> wpahandshakes;
 	private static Band instance;
 	private Object band_lock = new Object();
 	private UsbSource usbSource = null;
@@ -17,6 +18,29 @@ public class Band
 	public int nets=0;
 	public boolean capture=false;
 	public DataOutputStream captureWriter=null;
+	private String[] channels = { "Channel 1", "Channel 2", "Channel 3", "Channel 4",
+								  "Channel 5", "Channel 6", "Channel 7", "Channel 8",
+								  "Channel 9", "Channel 10", "Channel 11", "Channel 12",
+								  "Channel 13" };
+			
+	private boolean channels_enabled[] = {true,true,true,true,true,true,true,true,true,true,true,true,true};
+	public boolean sourceActive = false;
+	public boolean warMode = false;
+	
+	public String[] getChannels()
+	{
+		return channels;
+	}
+	
+	public boolean[] getChannelsEnabled()
+	{
+		return channels_enabled;
+	}
+	
+	public void setChannelsEnabled(boolean[] enabled)
+	{
+		channels_enabled = enabled;
+	}
 	
 	
 	public static Band instance()
@@ -56,11 +80,26 @@ public class Band
 	public Band()
 	{
 		networks = new ArrayList<Network>();
+		wpahandshakes = new ArrayList<WPAHandshake>();
 	}
 	
 	public void deAuth(String bssid,String hwaddr)
 	{
 		usbSource.sendDeauth(bssid,hwaddr);
+	}
+	
+	public Network getNetwork(int index)
+	{
+		Network result = null;
+		try
+		{
+			result = networks.get(index);
+		}
+		catch (Exception e)
+		{
+			result = null;
+		}
+		return result;
 	}
 	
 	public Network getNetwork(String bssid)
@@ -170,7 +209,7 @@ public class Band
 	    			formatted = String.format("%.02f", (double)((double)network.rx/(1024)))+" KB";
 	    		}
 
-				String extra = "| Channel: "+network.channel+" | RX: "+formatted+" | Beacons: "+network.beacon+" |";
+				String extra = " | "+((network.encType==0) ? "Open" : (network.encType==2) ? "WPA" : (network.encType==3) ? "WPA2" : "WEP")+" | Channel: "+network.channel+ " | RX: "+formatted + " | Beacons: "+network.beacon+" |";
 				if (usbSource!=null)
 				{
 					usbSource.updateNetworkOnUi(network.ssid,extra);
@@ -215,6 +254,11 @@ public class Band
 			}
 		}
 	}
+	
+	
+	
+	
+	
 	
 	
 	

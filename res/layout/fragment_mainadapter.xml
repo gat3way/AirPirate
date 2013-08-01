@@ -16,6 +16,35 @@
         android:layout_below="@+id/deviceText"
         android:text="" />
 
+    <Button
+        android:id="@+id/captureButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/deviceStatus"
+        android:layout_marginTop="20dip"
+        android:onClick="onCapturePressed"
+        android:text="Capture" />    
+
+    <Button
+        android:id="@+id/settingsButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dip"
+        android:layout_below="@+id/deviceStatus"
+        android:layout_toRightOf="@+id/captureButton"
+        android:onClick="onSettingsPressed"
+        android:text="Settings" />    
+    
+    <TextView
+        android:id="@+id/captureStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/captureButton"
+        android:layout_marginTop="20dip"
+        android:text="" />
+    
+    
+    
     <TextView
         android:id="@+id/statusText"
         android:layout_width="wrap_content"
