@@ -2605,9 +2605,10 @@ public class Rtl8192Card extends UsbSource
 		packet[28]=(byte)(val7&0xff);
 		packet[29]=(byte)((val7>>8)&0xff);
 		
-		for (int k=0;k<3;k++)
+		for (int k=0;k<5;k++)
 		{
 			// now the first deauth frame
+			
 			packet[32]=(byte)0xc0;
 			packet[33]=(byte)0x0;
 			packet[34]=(byte)0x3a;
@@ -2654,7 +2655,7 @@ public class Rtl8192Card extends UsbSource
 				{
 				}
 			}
-	
+			
 			// now the second deauth frame
 			packet[32]=(byte)0xc0;
 			packet[33]=(byte)0x0;

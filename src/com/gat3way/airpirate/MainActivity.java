@@ -9,8 +9,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.app.ActionBar.Tab;
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.gat3way.airpirate.MainFragmentPagerAdapter;
-
+import android.view.WindowManager.LayoutParams;
 
 import android.hardware.usb.*;
 import android.content.Context;
@@ -154,6 +153,49 @@ public class MainActivity extends SherlockFragmentActivity
  		if (stations!=null)	stations.removeStation(station);
  	}
  	
+ 	// Handshake-related routines are a bit more special
+ 	public void addHandshake(final WPAHandshake handshake) 
+ 	{
+ 		Runnable run = new Runnable() {
+            @Override
+            public void run() 
+            {
+         		MainFragmentHandshakes hs = fragmentPagerAdapter.getMainFragmentHandshakes();
+         		hs.addHandshake(handshake);
+            }
+		};
+		runOnUiThread(run);
+		run=null;
+ 	}
+ 	
+ 	public void updateHandshake(final WPAHandshake handshake) 
+ 	{
+ 		Runnable run = new Runnable() {
+            @Override
+            public void run() 
+            {
+         		MainFragmentHandshakes hs = fragmentPagerAdapter.getMainFragmentHandshakes();
+         		hs.updateHandshake(handshake);
+            }
+		};
+		runOnUiThread(run);
+ 	}
+ 	
+ 	public void removeHandshake(final WPAHandshake handshake) 
+ 	{
+ 		Runnable run = new Runnable() {
+            @Override
+            public void run() 
+            {
+         		MainFragmentHandshakes hs = fragmentPagerAdapter.getMainFragmentHandshakes();
+         		hs.removeHandshake(handshake);
+            }
+		};
+		runOnUiThread(run);
+ 	}
+ 	
+ 	
+ 	
  	public void onCapturePressed(View v)
  	{
  		Band band = Band.instance();
@@ -201,7 +243,8 @@ public class MainActivity extends SherlockFragmentActivity
 		registerReceiver(mUsbReceiver, filter);
 		mUsbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
 		
-		
+		// wakelock alternative 
+		getWindow().addFlags(LayoutParams.FLAG_KEEP_SCREEN_ON);
 		
 		
 		mActionBar = getSupportActionBar();
@@ -254,7 +297,10 @@ public class MainActivity extends SherlockFragmentActivity
                 .setText("Stations")
                 .setTabListener(tabListener);
         mActionBar.addTab(tab);	        
-        
+        tab = mActionBar.newTab()
+                .setText("Handshakes")
+                .setTabListener(tabListener);
+        mActionBar.addTab(tab);        
     	// Start status update thread
 		Thread thread = new Thread()
 		{

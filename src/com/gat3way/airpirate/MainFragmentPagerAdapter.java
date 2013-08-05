@@ -6,10 +6,11 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 public class MainFragmentPagerAdapter extends FragmentPagerAdapter
 {
-    final int PAGE_COUNT = 3;
+    final int PAGE_COUNT = 4;
     private MainFragmentAdapter androidFragment1;
     private MainFragmentNets androidFragment2;
     private MainFragmentStations androidFragment3;
+    private MainFragmentHandshakes androidFragment4;
     
     
     public MainFragmentNets getMainFragmentNets()
@@ -20,6 +21,11 @@ public class MainFragmentPagerAdapter extends FragmentPagerAdapter
     public MainFragmentStations getMainFragmentStations()
     {
     	return androidFragment3;
+    }
+
+    public MainFragmentHandshakes getMainFragmentHandshakes()
+    {
+    	return androidFragment4;
     }
     
     public MainFragmentPagerAdapter(FragmentManager fm) 
@@ -44,6 +50,10 @@ public class MainFragmentPagerAdapter extends FragmentPagerAdapter
                 androidFragment3 = new MainFragmentStations();
                 data.putInt("current_page", arg0+3);
                 return androidFragment3;
+            case 3:
+                androidFragment4 = new MainFragmentHandshakes();
+                data.putInt("current_page", arg0+3);
+                return androidFragment4;                
         }
         return null;
     }

@@ -231,7 +231,6 @@ abstract public class UsbSource {
 		run=null;
 	}
 
-
 	protected void addStation(String station)
 	{
 		mainActivity.addNetwork(station); 
@@ -321,7 +320,7 @@ abstract public class UsbSource {
 		}
 		
 		// Beacon
-		if (l>(24+12+10+offset))
+		if ((l>(24+12+10+offset))&&((buffer[offset+1]&2)!=2))
 		{
 			if ((buffer[offset]==(byte)0x80)&&(buffer[offset+1]==(byte)0x00))
     		{
@@ -377,7 +376,7 @@ abstract public class UsbSource {
     		}
 		}
 		// Probe Response
-		if (l>(24+12+10+offset))
+		if ((l>(24+12+10+offset))&&((buffer[offset+1]&2)!=2))
 		{
     		if ((buffer[offset]==(byte)0x50)&&(buffer[offset+1]==(byte)0x00)&&(buffer[offset+24+12]==(byte)0))
     		{
@@ -438,7 +437,8 @@ abstract public class UsbSource {
 		// Data
 		if (l>(24+offset))
 		{
-    		if (buffer[offset]==(byte)0x08)
+    		boolean tods=true;
+			if (buffer[offset]==(byte)0x08)
     		{
 				// Examine DS flag
     			int sta_offset=0,bssid_offset=0;
@@ -446,22 +446,19 @@ abstract public class UsbSource {
     			{
     				sta_offset = offset+4;
     				bssid_offset=offset+10;
+    				tods=false;
     			}
-    			else 
+    			else if ((buffer[offset+1]&1)==1)
     			{
-    				sta_offset = offset+16;
+    				sta_offset = offset+10;
     				bssid_offset=offset+4;
+
     			}
-    			
-    			// Examine if handshake - stupid way
-    			/*
-    			if ((offset+24+8+8)<l)
-    			if (((byte)buffer[offset+24+6]==(byte)0x88)&&(((byte)buffer[offset+24+7]==(byte)0x8e)))
-    			if ((byte)buffer[offset+24+8+1]==(byte)3)
+    			// Do not get station-station data for now...
+    			else
     			{
-    				handshake=true;
+    				return;
     			}
-    			*/
     			
     			String bssidstr = getMacString(buffer, bssid_offset);
     			Network network = band.getNetwork(bssidstr);
@@ -472,46 +469,53 @@ abstract public class UsbSource {
     			String stastr = getMacString(buffer, sta_offset);
     			if (bssid_offset>0)
     			{
-	    			if ((!stastr.equals("ff:ff:ff:ff:ff:ff"))&&(!stastr.substring(0,8).equals("01:00:5e"))&&(!stastr.substring(0,8).equals("00:00:00"))&&(!stastr.substring(0,8).equals("01:80:c2"))&&(!stastr.substring(0,5).equals("33:33"))&&(!stastr.substring(0,8).equals("01:00:0c")))
+	    			if ((!stastr.equals(bssidstr))&&(!stastr.equals("ff:ff:ff:ff:ff:ff"))&&(!stastr.substring(0,8).equals("01:00:5e"))&&(!stastr.substring(0,8).equals("00:00:00"))&&(!stastr.substring(0,8).equals("01:80:c2"))&&(!stastr.substring(0,5).equals("33:33"))&&(!stastr.substring(0,8).equals("01:00:0c")))
 	    			{
 	    				network.updateStations(stastr);
 	    				network.updateStationData(stastr);
 	    				network.updateStationTimestamp(stastr);
 	    				network.updateStationRx(stastr, l-offset);
 	    			}
+	    			else return;
     			}
 
     			// Here be dragons and dark magic...
     			int keyver=0;
     			boolean handshake=false;
     			if ((offset+80)<l)
-        		if ((buffer[offset+30]==(byte)0x88)&&((buffer[offset+31]==(byte)0x8e)))
-        		{
-        			// EAPOL RSN/WPA key? Then we have a zero key info byte 1? It must be an AP challenge
-        			// TODO: replay counter logic
-        			if ( ((buffer[offset+36]==(byte)0x02)||(buffer[offset+36]==(byte)0xfe)) && ((buffer[offset+37]==(byte)0)))
-        			{
-        				handshake=true;
-        				WPAHandshake hshake = new WPAHandshake(bssidstr);
-        				hshake.keyVer = ((byte)(buffer[offset+38]&3)==2) ? 2 : 1;
-        				hshake.hwaddr=stastr;
-        				hshake.bssid=bssidstr;
-        				hshake.anonce = new byte[32];
-        				hshake.frame1 = new byte[l-offset-4];
-        				for (int i=0;i<32;i++) hshake.anonce[i]=buffer[offset+49+i];
-        				for (int i=0;i<l-offset-4;i++) hshake.frame1[i]=buffer[offset+i];
-        				hshake.step1 = true;
-        				band.wpahandshakes.add(hshake);
-        			}
-        			
+    			{
+	        		if ((!tods) &&(buffer[offset+30]==(byte)0x88)&&((buffer[offset+31]==(byte)0x8e)))
+	        		{
+	        			// EAPOL RSN/WPA key? Then we have a zero key info byte 1? It must be an AP challenge
+	        			// TODO: replay counter logic
+	        			if ( ((buffer[offset+36]==(byte)0x02)||(buffer[offset+36]==(byte)0xfe)) && ((buffer[offset+37]==(byte)0)))
+	        			{
+	        				WPAHandshake hshake = null;
+	        				handshake=true;
+	        				hshake = new WPAHandshake(bssidstr);
+	        				hshake.keyVer = ((byte)(buffer[offset+38]&3)==2) ? 2 : 1;
+	        				hshake.hwaddr=stastr;
+	        				hshake.bssid=bssidstr;
+	        				hshake.anonce = new byte[32];
+	        				hshake.frame1 = new byte[l-offset-4];
+	        				for (int i=0;i<32;i++) hshake.anonce[i]=buffer[offset+49+i];
+	        				for (int i=0;i<l-offset-4;i++) hshake.frame1[i]=buffer[offset+i];
+	        				hshake.step1 = true;
+	        				band.wpahandshakes.add(hshake);
+	        				mainActivity.addHandshake(hshake);
+	        				mainActivity.updateHandshake(hshake);
+	        			}
+	        		}	
         			// EAPOL RSN/WPA key? Then we have a 1 key info byte 1? It must be an SP response
-        			// TODO: replay counter logic
-        			else if ( ((buffer[offset+36]==(byte)0x02)||(buffer[offset+36]==(byte)0xfe)) && ((buffer[offset+37]==(byte)1)))
+        			// TODO: better replay counter logic
+	        		if ((tods) && ((buffer[offset+36]==(byte)0x02)||(buffer[offset+36]==(byte)0xfe)) && ((buffer[offset+37]==(byte)1)))
         			{
         				WPAHandshake hshake = null;
         				for (int i=0;i<band.wpahandshakes.size();i++)
         				{
-        					if ((band.wpahandshakes.get(i).step2==false)&&(band.wpahandshakes.get(i).hwaddr.equals(stastr))&&(band.wpahandshakes.get(i).bssid.equals(bssidstr)))
+        					// It is generally possible that frames come out of order and 3 is received before 2. Weird
+        					// But replay counter should stay 0 at that point
+        					if ((band.wpahandshakes.get(i).replay==-1)&&(band.wpahandshakes.get(i).step2==false)/*&&(band.wpahandshakes.get(i).step3==false)&&(band.wpahandshakes.get(i).step4==false)&&(band.wpahandshakes.get(i).hwaddr.equals(stastr))*/&&(band.wpahandshakes.get(i).bssid.equals(bssidstr)))
         					{
         						hshake = band.wpahandshakes.get(i);
         					}
@@ -528,26 +532,32 @@ abstract public class UsbSource {
             				for (int i=0;i<32;i++) hshake.snonce[i]=buffer[offset+49+i];
             				for (int i=0;i<l-offset-4;i++) hshake.frame2[i]=buffer[offset+i];
             				hshake.step2 = true;
+            				hshake.replay=buffer[offset+48];
             				band.wpahandshakes.add(hshake);
+            				mainActivity.addHandshake(hshake);
+            				mainActivity.updateHandshake(hshake);
         				}
-        				else
+        				else 
         				{
 	        				hshake.frame2 = new byte[l-offset-4];
 	        				hshake.snonce = new byte[32];
 	        				for (int i=0;i<32;i++) hshake.snonce[i]=buffer[offset+49+i];
 	        				for (int i=0;i<l-offset-4;i++) hshake.frame2[i]=buffer[offset+i];
 	        				hshake.step2 = true;
+	        				hshake.replay=buffer[offset+48];
+	        				mainActivity.updateHandshake(hshake);
         				}
         			}
 
         			// EAPOL RSN/WPA key? Then we have a 19 or 1 key info byte 1? It must be an SP response
         			// TODO: replay counter logic
-        			else if ( ((buffer[offset+36]==(byte)0x02)||(buffer[offset+36]==(byte)0xfe)) && ( ((buffer[offset+37]==(byte)19))||((buffer[offset+37]==(byte)1))))
+	        		if ((buffer[offset+48]==1)&&(!tods) && ((buffer[offset+36]==(byte)0x02)||(buffer[offset+36]==(byte)0xfe)) && ( ((buffer[offset+37]==(byte)19))||((buffer[offset+37]==(byte)1))))
         			{
         				WPAHandshake hshake = null;
         				for (int i=0;i<band.wpahandshakes.size();i++)
         				{
-        					if ((band.wpahandshakes.get(i).step3==false)&&(band.wpahandshakes.get(i).hwaddr.equals(stastr))&&(band.wpahandshakes.get(i).bssid.equals(bssidstr)))
+        					if ((band.wpahandshakes.get(i).step3==false)/*&&(band.wpahandshakes.get(i).step4==false)*/&&(band.wpahandshakes.get(i).hwaddr.equals(stastr))&&(band.wpahandshakes.get(i).bssid.equals(bssidstr)))
+        					if (((buffer[offset+48]==band.wpahandshakes.get(i).replay+1)&&(band.wpahandshakes.get(i).step2==true))||((band.wpahandshakes.get(i).replay==-1)&&(band.wpahandshakes.get(i).step2==false)))
         					{
         						hshake = band.wpahandshakes.get(i);
         					}
@@ -565,18 +575,22 @@ abstract public class UsbSource {
 	        				for (int i=0;i<l-offset-4;i++) hshake.frame3[i]=buffer[offset+i];
 	        				hshake.step3 = true;
 	        				band.wpahandshakes.add(hshake);
+	        				mainActivity.addHandshake(hshake);
+	        				mainActivity.updateHandshake(hshake);
         				}
-        				else
+        				else 
         				{
 	        				hshake.frame3 = new byte[l-offset-4];
 	        				if (hshake.anonce==null) hshake.anonce = new byte[32];
 	        				for (int i=0;i<32;i++) hshake.anonce[i]=buffer[offset+49+i];
 	        				for (int i=0;i<l-offset-4;i++) hshake.frame3[i]=buffer[offset+i];
 	        				hshake.step3 = true;
+	        				mainActivity.updateHandshake(hshake);
         				}
         			}
         			
-        			else if ( ((buffer[offset+37]==(byte)0x01)&&(buffer[offset+36]==(byte)0xfe)) && ( ((buffer[offset+37]==(byte)3))||((buffer[offset+37]==(byte)2))))
+	        		// last packet
+	        		if ((tods) && ((buffer[offset+37]==(byte)0x01)&&(buffer[offset+36]==(byte)0xfe)) || ( ((buffer[offset+37]==(byte)3))&&((buffer[offset+36]==(byte)2))))
         			{
         				WPAHandshake hshake = null;
         				for (int i=0;i<band.wpahandshakes.size();i++)
@@ -597,17 +611,17 @@ abstract public class UsbSource {
 	        				for (int i=0;i<l-offset-4;i++) hshake.frame4[i]=buffer[offset+i];
 	        				hshake.step4 = true;
 	        				band.wpahandshakes.add(hshake);
+	        				mainActivity.addHandshake(hshake);
+	        				mainActivity.updateHandshake(hshake);
         				}
-        				else
+        				else if ((!hshake.step4))
         				{
 	        				hshake.frame4 = new byte[l-offset-4];
 	        				for (int i=0;i<l-offset-4;i++) hshake.frame4[i]=buffer[offset+i];
 	        				hshake.step4 = true;
+	        				mainActivity.updateHandshake(hshake);
         				}
         			}        			
-        			
-        			
-
         		}
     			
     			if (handshake==true)
@@ -617,7 +631,6 @@ abstract public class UsbSource {
     				network.updateStationHandshake(stastr);
     			}
     		}
-    		
     		// Get null Function too
     		else if (buffer[offset]==(byte)0x48)
     		{

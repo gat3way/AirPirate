@@ -2,9 +2,9 @@ package com.gat3way.airpirate;
 
 public class WPAHandshake 
 {
-	public String essid;
-	public String bssid="";
-	public String hwaddr="";
+	public String essid="?";
+	public String bssid="?";
+	public String hwaddr="?";
 	public byte[] snonce=null;
 	public byte[] anonce=null;
 	public byte[] eapol;
@@ -20,6 +20,8 @@ public class WPAHandshake
 	public byte[] frame3;
 	public byte[] frame4;
 	public byte[] beacon;
+	public long timestamp;
+	public int replay=-1;
 	
 	public WPAHandshake(String bssidstr)
 	{
@@ -30,7 +32,7 @@ public class WPAHandshake
 			Network net = band.getNetwork(i);
 			if (net!=null)
 			{
-				if (net.bssid.equals(bssid))
+				if (net.bssid.equals(bssidstr))
 				{
 					beacon = net.beaconFrame;
 					essid = net.ssid;
@@ -38,5 +40,6 @@ public class WPAHandshake
 			}
 			else beacon = null;
 		}
+		timestamp = System.currentTimeMillis();
 	}
 }
