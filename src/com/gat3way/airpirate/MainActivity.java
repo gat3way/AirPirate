@@ -61,6 +61,7 @@ public class MainActivity extends SherlockFragmentActivity
          		updateDeviceStatusString("");
          		//cleanup
          		Band band = Band.instance();
+         		if (band.getUsbSource()!=null) band.getUsbSource().stopped=true;
          		band.reset();
 			}
 
@@ -368,6 +369,13 @@ public class MainActivity extends SherlockFragmentActivity
 		thread.start();
 	}
 
-
-
+	@Override
+	public void onBackPressed() 
+	{
+		Band band = Band.instance();
+		band.stopCapture();
+		unregisterReceiver(mUsbReceiver);
+		if (band.getUsbSource()!=null) band.getUsbSource().stopped=true;
+		finish();
+	}
 }

@@ -1,6 +1,7 @@
 package com.gat3way.airpirate;
 
 import android.os.Bundle;
+import android.widget.Toast;
 import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,13 +41,14 @@ public class MainFragmentHandshakes extends SherlockFragment implements OnItemCl
     	toadd[1]="| SSID: "+handshake.essid;
     	toadd[1]+=" | Quality: ";
     	String quality = "";
-    	if ((!handshake.step2) && (!handshake.step3)) quality="Bad";
-    	else
+    	if ((handshake.step2) && (handshake.step3))
     	{
     		if ((!handshake.step1)&&(!handshake.step4)) quality="Average";
     		else if (((handshake.step1)&&(!handshake.step4))||((!handshake.step1)&&(handshake.step4))) quality="Good";
     		else quality = "Excelent";
     	}
+    	else quality="Bad";
+    	
     	toadd[1]+=quality+" | TS: "+handshake.timestamp;
     	String steps="";
     	steps+=handshake.step1 ? "1" : "";
@@ -84,12 +86,14 @@ public class MainFragmentHandshakes extends SherlockFragment implements OnItemCl
     			adapter.getItem(a)[1]+=" | Quality: ";
     	    	String quality = "";
     	    	if ((!handshake.step2) && (!handshake.step3)) quality="Bad";
-    	    	else
+    	    	else if ((handshake.step2) && (handshake.step3))
     	    	{
     	    		if ((!handshake.step1)&&(!handshake.step4)) quality="Average";
     	    		else if (((handshake.step1)&&(!handshake.step4))||((!handshake.step1)&&(handshake.step4))) quality="Good";
     	    		else quality = "Excelent";
     	    	}
+    	    	else quality="Bad";
+    	    	
     	    	adapter.getItem(a)[1]+=quality+" | TS: "+handshake.timestamp;
     	    	String steps="";
     	    	steps+=handshake.step1 ? "1" : "";
@@ -134,14 +138,16 @@ public class MainFragmentHandshakes extends SherlockFragment implements OnItemCl
 	            final String text1 = this.getItem(position)[0];
 	            final String text2 = this.getItem(position)[1];
 
-	            /*
+	            
 	            row.setOnClickListener(new TwoLineListItem.OnClickListener() 
 	            {  
 	                @Override
 	            	public void onClick(View v)
 	                {
+	                	Toast.makeText(ApplicationContextProvider.getContext(), "WPA cracking not supported yet", Toast.LENGTH_LONG).show();
+	                	/*
 	                	String bssid = text2.substring(text2.indexOf("BSSID: ")+7, text2.indexOf("BSSID: ")+7+17);
-	        	    	final String text3 = bssid;
+	                	final String text3 = bssid;
 	                	AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 	        	        builder.setTitle("Deauth Attack");
 	        	        builder.setMessage("Perform deauth attack on client "+text1+" associated with BSSID "+bssid);
@@ -163,10 +169,10 @@ public class MainFragmentHandshakes extends SherlockFragment implements OnItemCl
 	        	        });
 	                	AlertDialog alert = builder.create();
 	                    alert.show();
-
+						*/
 	                }
 	             });
-	             */
+	             
 	            
                 return row;
 	        }
@@ -175,46 +181,19 @@ public class MainFragmentHandshakes extends SherlockFragment implements OnItemCl
     	list.setAdapter(adapter);
     	
 
-    	// Start checker thread
-		/*
-    	Thread thread = new Thread()
-		{
-		      @Override
-		      public void run() 
-		      {
-		    	  while (true)
-		    	  {
-		    		  SystemClock.sleep(1000);
-		    		  // STA update
-		    		  band.updateStationsTimeStamp();
-		    		  band.updateStationsDetails();
-		    		  if (band.getUsbSource()==null)
-		    		  {
-		    			  Runnable run = new Runnable() 
-				  		  {
-				              @Override
-				              public void run() 
-				              {
-				    			  for (int i = 0; i < adapter.getCount(); i++) 
-								  {
-									  adapter.remove(adapter.getItem(i));
-								  }
-				              }
-				  		  };
-				  		  getActivity().runOnUiThread(run);
-		    		  }
-		    	  }
-		      }
-		};
-		thread.start();
-		*/
+    	
     	super.onStart();
     }
     
     @Override
 	public void onResume() 
     {
-		super.onResume();
+		// recreate view
+    	for (int i=0;i<band.wpahandshakes.size();i++)
+    	{
+    		addHandshake(band.wpahandshakes.get(i));
+    	}
+    	super.onResume();
     }
     
     @Override
@@ -235,7 +214,7 @@ public class MainFragmentHandshakes extends SherlockFragment implements OnItemCl
     @Override
     public void onItemClick (AdapterView<?> adapter, View arg1, int pos,long arg3)
     {
-    	TwoLineListItem row = (TwoLineListItem)adapter.getItemAtPosition(pos);
+    	//super.onItemClick();
     }
     
 }

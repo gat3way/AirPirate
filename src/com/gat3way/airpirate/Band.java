@@ -7,7 +7,7 @@ import android.util.Log;
 
 public class Band 
 {
-	private ArrayList<Network> networks;
+	public ArrayList<Network> networks;
 	public ArrayList<WPAHandshake> wpahandshakes;
 	private static Band instance;
 	private Object band_lock = new Object();
@@ -62,7 +62,7 @@ public class Band
 		stations = 0;
 		handshakes = 0;
 		nets = 0;
-		
+		usbSource = null;
 		band_lock = new Object();
 	}
 	
@@ -88,6 +88,7 @@ public class Band
 		usbSource.sendDeauth(bssid,hwaddr);
 	}
 	
+	/*
 	public Network getNetwork(int index)
 	{
 		Network result = null;
@@ -101,6 +102,7 @@ public class Band
 		}
 		return result;
 	}
+	*/
 	
 	public Network getNetwork(String bssid)
 	{
@@ -119,6 +121,10 @@ public class Band
 			{
 				Network network = new Network(bssid,"");
 				networks.add(network);
+				if (usbSource!=null)
+				{
+					//usbSource.addNetworkOnUi(network.ssid);
+				}
 				return network;
 			}
 			return null;
@@ -151,6 +157,7 @@ public class Band
 				}
 			}
 		}
+		updateNetworksDetails();
 	}
 
 	
@@ -162,12 +169,15 @@ public class Band
 			for (int a=0;a<networks.size();a++)
 			{
 				Network network = networks.get(a);
-				if (((System.currentTimeMillis()/1000) - network.lastBeacon)>60)
+				if (((System.currentTimeMillis()/1000) - network.lastBeacon)>30)
 				{
-					networks.remove(network);
-					if (usbSource!=null)
+					if (network.stations.size()==0)
 					{
-						usbSource.removeNetworkOnUi(network.ssid);
+						networks.remove(network);
+						if (usbSource!=null)
+						{
+							usbSource.removeNetworkOnUi(network.ssid);
+						}
 					}
 				}
 			}
@@ -209,7 +219,7 @@ public class Band
 	    			formatted = String.format("%.02f", (double)((double)network.rx/(1024)))+" KB";
 	    		}
 
-				String extra = " | "+((network.encType==0) ? "Open" : (network.encType==2) ? "WPA" : (network.encType==3) ? "WPA2" : "WEP")+" | Channel: "+network.channel+ " | RX: "+formatted + " | Beacons: "+network.beacon+" |";
+				String extra = " | "+((network.encType==0) ? "Open" : (network.encType==3) ? "WPA" : (network.encType==2) ? "WPA2" : "WEP")+" | Channel: "+network.channel+ " | RX: "+formatted + " | Beacons: "+network.beacon+" |";
 				if (usbSource!=null)
 				{
 					usbSource.updateNetworkOnUi(network.ssid,extra);
@@ -245,7 +255,10 @@ public class Band
 		    			formatted = String.format("%.02f", (double)((double)station.rx/(1024)))+" KB";
 		    		}
 		    		
-					String extra = "| SSID: "+network.ssid+" | BSSID: "+network.bssid+" | RX: "+formatted+" |";
+					String extra = "| SSID: "+network.ssid+" | BSSID: "+network.bssid+" | RX: "+formatted+" | Security: ";
+					extra += (network.encType==0) ? "Open" : (network.encType==1) ? "WEP" : (network.encType==3) ? "WPA" : "WPA2";
+					extra += " |";
+							
 					if (usbSource!=null)
 					{
 						usbSource.updateStationOnUi(station.hwaddr,extra);

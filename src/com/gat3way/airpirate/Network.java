@@ -6,7 +6,7 @@ import android.util.Log;
 
 public class Network 
 {
-	private ArrayList<Station> stations;
+	public ArrayList<Station> stations;
 	public String ssid;
 	public String bssid;
 	public int encType;

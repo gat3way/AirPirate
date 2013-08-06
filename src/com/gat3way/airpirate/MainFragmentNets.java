@@ -103,10 +103,13 @@ public class MainFragmentNets extends SherlockFragment
 		      {
 		    	  while (true)
 		    	  {
-		    		  SystemClock.sleep(1000);
-		    		  band.updateNetworksTimeStamp();
-		    		  band.updateNetworksDetails();
-		    		  if (band.getUsbSource()==null)
+		    		  if (band.getUsbSource()!=null)
+		    		  {
+		    			  SystemClock.sleep(1000);
+		    			  band.updateNetworksTimeStamp();
+		    			  band.updateNetworksDetails();
+		    		  }
+		    		  else
 		    		  {
 		    			  Runnable run = new Runnable() 
 				  		  {
@@ -119,7 +122,11 @@ public class MainFragmentNets extends SherlockFragment
 								  }
 				              }
 				  		  };
-				  		  getActivity().runOnUiThread(run);
+				  		  if (getActivity()!=null)
+				  		  {
+				  			  getActivity().runOnUiThread(run);
+				  		  }
+				  		  else return;
 		    		  }
 		    	  }
 		      }
@@ -131,7 +138,28 @@ public class MainFragmentNets extends SherlockFragment
     @Override
 	public void onResume() 
     {
-		super.onResume();
+    	// recreate view
+    	for (int i=0;i<band.networks.size();i++)
+    	{
+    		Network network = band.networks.get(i);
+    		String formatted="";
+    		if (network.rx>1024*1024*1024)
+    		{
+    			formatted = String.format("%.02f", (double)((double)network.rx/(1024*1024*1024)))+" GB";
+    		}
+    		else if (network.rx>1024*1024)
+    		{
+    			formatted = String.format("%.02f", (double)((double)network.rx/(1024*1024)))+" MB";
+    		}
+    		else
+    		{
+    			formatted = String.format("%.02f", (double)((double)network.rx/(1024)))+" KB";
+    		}
+
+			String extra = " | "+((network.encType==0) ? "Open" : (network.encType==2) ? "WPA" : (network.encType==3) ? "WPA2" : "WEP")+" | Channel: "+network.channel+ " | RX: "+formatted + " | Beacons: "+network.beacon+" |";
+    		addNetwork(band.networks.get(i).ssid,extra);
+    	}
+    	super.onResume();
     }
     
     @Override

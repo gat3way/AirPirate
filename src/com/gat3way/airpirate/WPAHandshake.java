@@ -29,7 +29,7 @@ public class WPAHandshake
 		frame1=frame2=frame3=frame4=null;
 		for (int i=0;i<band.getNetworks();i++)
 		{
-			Network net = band.getNetwork(i);
+			Network net = band.networks.get(i);
 			if (net!=null)
 			{
 				if (net.bssid.equals(bssidstr))

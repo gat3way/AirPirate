@@ -149,6 +149,7 @@ public class MainFragmentStations extends SherlockFragment implements OnItemClic
 		    		  SystemClock.sleep(1000);
 		    		  // STA update
 		    		  band.updateStationsTimeStamp();
+		    		  
 		    		  band.updateStationsDetails();
 		    		  if (band.getUsbSource()==null)
 		    		  {
@@ -163,7 +164,11 @@ public class MainFragmentStations extends SherlockFragment implements OnItemClic
 								  }
 				              }
 				  		  };
-				  		  getActivity().runOnUiThread(run);
+				  		  if (getActivity()!=null)
+				  		  {
+				  			  getActivity().runOnUiThread(run);
+				  		  }
+				  		  else return;
 		    		  }
 		    	  }
 		      }
@@ -176,7 +181,33 @@ public class MainFragmentStations extends SherlockFragment implements OnItemClic
     @Override
 	public void onResume() 
     {
-		super.onResume();
+    	// recreate view
+    	for (int i=0;i<band.networks.size();i++)
+    	{
+    		Network network = band.networks.get(i);
+    		for (int j=0;j<network.stations.size();j++)
+    		{
+    			Station station = network.stations.get(j);
+				String formatted="";
+	    		if (station.rx>1024*1024*1024)
+	    		{
+	    			formatted = String.format("%.02f", (double)((double)station.rx/(1024*1024*1024)))+" GB";
+	    		}
+	    		else if (network.rx>1024*1024)
+	    		{
+	    			formatted = String.format("%.02f", (double)((double)station.rx/(1024*1024)))+" MB";
+	    		}
+	    		else
+	    		{
+	    			formatted = String.format("%.02f", (double)((double)station.rx/(1024)))+" KB";
+	    		}
+				String extra = "| SSID: "+network.ssid+" | BSSID: "+network.bssid+" | RX: "+formatted+" |";
+				extra += (network.encType==0) ? "Open" : (network.encType==1) ? "WEP" : (network.encType==3) ? "WPA" : "WPA2";
+				extra += " |";
+				addStation(station.hwaddr,extra);
+    		}
+    	}
+    	super.onResume();
     }
     
     @Override

