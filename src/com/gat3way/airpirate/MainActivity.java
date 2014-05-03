@@ -61,8 +61,10 @@ public class MainActivity extends SherlockFragmentActivity
          		updateDeviceStatusString("");
          		//cleanup
          		Band band = Band.instance();
-         		if (band.getUsbSource()!=null) band.getUsbSource().stopped=true;
-         		band.reset();
+         		if (band.getUsbSource()!=null) {
+                    band.getUsbSource().stopped = true;
+                    band.reset();
+                }
 			}
 
 	    	if (ACTION_USB_PERMISSION.equals(action)) 

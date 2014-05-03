@@ -1257,8 +1257,12 @@ public class Rtl8192Card extends UsbSource
     	else if (device.getVendorId() == 0x0846 && device.getProductId() == 0x9041)
     	{
     		deviceName="RTL8188CUS";
-    	}    		
-    	else if (device.getVendorId() == 0x050d && device.getProductId() == 0x1102)
+    	}
+        else if (device.getVendorId() == 0x0bda && device.getProductId() == 0x8176)
+        {
+            deviceName="RTL8188CUS";
+        }
+        else if (device.getVendorId() == 0x050d && device.getProductId() == 0x1102)
     	{
     		deviceName="Belkin F7D1102";
     	}  
