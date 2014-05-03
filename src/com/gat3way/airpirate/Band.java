@@ -370,7 +370,9 @@ public class Band
 	{
 		try
         {
-        	captureWriter.close();
+            if(captureWriter != null) {
+                captureWriter.close();
+            }
         }
 		catch (Exception e)
 		{
